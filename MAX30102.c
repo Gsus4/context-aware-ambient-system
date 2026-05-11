@@ -26,6 +26,27 @@
 #define LAG_JUMP_MAX    25          /* samples — hard lag reset     */
 #define NO_LAG_RESET    3           /* streak count — reopen search */
 #define LOG_FAIL_EVERY  10          /* print fail msg every N times */
+#define HR_WARMUP_MS    1500
+#define MISS_UNLOCK_COUNT 3
+#define RHYTHM_RATIO_MIN 0.88f
+#define RHYTHM_RATIO_MAX 1.30f
+#define BPM_JUMP_UP_MAX 12.0f
+#define BPM_JUMP_DOWN_MAX 22.0f
+#define PRELOCK_INTERVAL_MIN 650
+#define PRELOCK_INTERVAL_MAX 950
+#define PRELOCK_RATIO_MIN 0.80f
+#define PRELOCK_RATIO_MAX 1.25f
+#define PRELOCK_READY_COUNT 3
+
+#define INT_BUF_SIZE 5
+
+#define HR_DEBUG 0
+
+#if HR_DEBUG
+#define DBG(...) printf(__VA_ARGS__)
+#else
+#define DBG(...)
+#endif
 
 /* ═══════════════════════════════════════════════════════════════
  * HR state  (static — no VLA on Pico stack)
@@ -36,13 +57,25 @@
 static float lp = 0, hp = 0, prev_lp = 0;
 static float prev1 = 0, prev2 = 0;
 static float threshold = 1000;
+static float avg_amp = 0.0f;
 
 static uint32_t last_peak_time = 0;
+static uint32_t signal_start_time = 0;
 
 static float averaged_bpm = 0;
 static int has_signal = 0;
 static int prev_has_signal = 0;
+static float expected_interval = 0.0f;
+static float last_peak_value = 0.0f;
 static int peak_count = 0;
+static int miss_count = 0;
+static uint32_t last_miss_slot = 0;
+static float prelock_interval_avg = 0.0f;
+static int prelock_count = 0;
+
+static float cand_peak = 0;
+static uint32_t cand_time = 0;
+static int cand_valid = 0;
 
 /* ═══════════════════════════════════════════════════════════════
  * SpO2 state
@@ -98,8 +131,8 @@ void max30102_setup(void)
     write_reg(MAX30102_SPO2_CONFIG, 0x47);
 
     /* LED current ~18.8 mA  (0x5F).  Raise to 0x7F (~25 mA) for wrist. */
-    write_reg(MAX30102_LED1_PA, 0x24);
-    write_reg(MAX30102_LED2_PA, 0x24);
+    write_reg(MAX30102_LED1_PA, 0x4F);
+    write_reg(MAX30102_LED2_PA, 0x4F);
 
     /* Clear FIFO */
     write_reg(MAX30102_FIFO_WR_PTR, 0x00);
@@ -142,8 +175,21 @@ void max30102_hr_init(void)
     prev1 = prev2 = 0.0f;
 
     threshold = 0.0f;
+    avg_amp = 0.0f;
 
     last_peak_time = 0;
+    signal_start_time = 0;
+    expected_interval = 0.0f;
+    last_peak_value = 0.0f;
+    peak_count = 0;
+    miss_count = 0;
+    last_miss_slot = 0;
+    prelock_interval_avg = 0.0f;
+    prelock_count = 0;
+
+    cand_peak = 0.0f;
+    cand_time = 0;
+    cand_valid = 0;
 }
 
 int   max30102_get_bpm      (void) { return (int)(averaged_bpm + 0.5f); }
@@ -158,19 +204,39 @@ int   max30102_has_signal   (void) { return has_signal; }
 /* ═══════════════════════════════════════════════════════════════
  * HR — main update  (call once per sample, i.e. at 100 Hz)
  * ═══════════════════════════════════════════════════════════════ */
-void max30102_hr_update(uint32_t red, uint32_t ir)
+
+void max30102_hr_update(uint32_t red, uint32_t ir, uint32_t now)
 {
+    (void)red;
+
     /* ── 0. finger detect ── */
     if (!has_signal) {
-        if (ir > 20000) has_signal = 1;
+        if (ir > 120000) {
+            has_signal = 1;
+            signal_start_time = now;
+            last_peak_time = 0;
+            expected_interval = 0.0f;
+            last_peak_value = 0.0f;
+            peak_count = 0;
+            miss_count = 0;
+            last_miss_slot = 0;
+            prelock_interval_avg = 0.0f;
+            prelock_count = 0;
+            cand_valid = 0;
+            DBG("[SIGNAL] detected ir=%d\n", ir);
+        }
     } else {
-        if (ir < 10000) has_signal = 0;
+        if (ir < 15000) {
+            has_signal = 0;
+            DBG("[SIGNAL] lost ir=%d\n", ir);
+        }
     }
 
     if (!has_signal && prev_has_signal) {
         max30102_hr_init();
         max30102_spo2_init();
         last_peak_time = 0;
+        cand_valid = 0;
         printf("[RESET] finger removed\n");
     }
 
@@ -184,101 +250,319 @@ void max30102_hr_update(uint32_t red, uint32_t ir)
 
     float signal = hp;
 
-    /* ── 2. threshold（稍微加快反應） ── */
+    // ===== normalization =====
     float abs_sig = fabsf(signal);
-    threshold = 0.85f * threshold + 0.15f * abs_sig;
 
+    // 慢速追蹤振幅（不要太快）
+    avg_amp = 0.95f * avg_amp + 0.05f * abs_sig;
+
+    // 避免除以太小
+    if (avg_amp > 0.001f) {
+        signal = signal / avg_amp;
+    }
+
+    /* ── 2. threshold ── */
+
+    // 初始化
+    abs_sig = fabsf(signal);
+
+    if (threshold < 0.1f) {
+        threshold = abs_sig;
+    }
+
+    // 上升限制（放寬）
+    float max_rise = threshold * 1.5f;
+
+    // target（允許跟上訊號）
+    float target = fminf(abs_sig, max_rise);
+
+    // 更新（加快一點）
+    threshold = 0.9f * threshold + 0.1f * target;
+
+    if (signal_start_time != 0 && (now - signal_start_time < HR_WARMUP_MS)) {
+        goto shift;
+    }
+
+    if (expected_interval > 0 && last_peak_time != 0) {
+        float dt = now - last_peak_time;
+
+        if (dt > expected_interval * 1.8f) {
+            uint32_t miss_slot = (uint32_t)(dt / expected_interval);
+
+            if (miss_slot > last_miss_slot) {
+                last_miss_slot = miss_slot;
+                miss_count++;
+                cand_valid = 0;
+
+                DBG("[MISS] missed beat dt=%.0f expected=%.0f count=%d\n",
+                    dt, expected_interval, miss_count);
+
+                if (miss_count >= MISS_UNLOCK_COUNT) {
+                    DBG("[RESET] lost rhythm\n");
+                    last_peak_time = 0;
+                    last_peak_value = 0.0f;
+                    expected_interval = 0.0f;
+                    peak_count = 0;
+                    miss_count = 0;
+                    last_miss_slot = 0;
+                    prelock_interval_avg = 0.0f;
+                    prelock_count = 0;
+                }
+            }
+        }
+    }
     /* ── 3. slope peak detect ── */
     float slope1 = prev1 - prev2;
     float slope2 = signal - prev1;
 
-    static float expected_interval = 0.0f;
-    static float last_peak_value = 0.0f;
+    // ===== peak candidate =====
+    if (slope1 > 0 && slope2 < 0) {
 
-    float slope_ratio = prev1 / (prev2 + 1e-6f);
+        // ===== 1. 最基本振幅門檻（先砍極小雜訊）=====
+        if (prev1 < 0.1f) {
+            DBG("[REJECT] too small\n");
+            goto shift;
+        }
 
-    if (slope1 > 0 && slope2 < 0 &&
-        prev1 > threshold * 1.25f &&
-        slope_ratio > 1.02f)   // ⭐ 關鍵修正（通用）
+        if (prev1 <= threshold * 1.0f) {
+            DBG("[REJECT] below threshold\n");
+            goto shift;
+        }
+
+
+        if (threshold > 0 && prev1 > threshold * 3.0f) {
+            DBG("[REJECT] too large peak %.2f\n", prev1);
+            goto shift;
+        }
+
+        if (last_peak_time != 0 &&
+            expected_interval > 0 &&
+            (now - last_peak_time < expected_interval * 0.8f)) {
+            DBG("[REJECT] early peak\n");
+            goto shift;
+        }
+
+        if (last_peak_time != 0 && (now - last_peak_time < 450)) {
+            DBG("[REJECT] too close (double peak)\n");
+            goto shift;
+        }
+
+        DBG("[PEAK?] slope ok sig=%.2f thr=%.2f\n",
+            prev1, threshold);
+
+        if (!cand_valid || prev1 > cand_peak) {
+            cand_peak = prev1;
+            cand_time = now;
+            cand_valid = 1;
+            DBG("[CAND] updated peak=%.2f\n", cand_peak);
+        }
+    }
+    // ===== candidate timeout =====
+    if (cand_valid && (now - cand_time > 1200)) {
+        DBG("[CAND] timeout\n");
+        cand_valid = 0;
+    }
+
+    // ===== validation =====
+    if (cand_valid && (now - cand_time > 250))
     {
-        uint32_t now = to_ms_since_boot(get_absolute_time());
+        if (last_peak_time != 0 &&
+            miss_count >= MISS_UNLOCK_COUNT &&
+            (now - last_peak_time > 3000)) {
+        DBG("[FORCE RESET] re-lock rhythm\n");
+
+        last_peak_time = cand_time;
+        last_peak_value = cand_peak;
+
+        expected_interval = 0;
+        peak_count = 0;
+        miss_count = 0;
+        last_miss_slot = 0;
+        prelock_interval_avg = 0.0f;
+        prelock_count = 0;
+
+        cand_valid = 0;
+        goto shift;
+    }
+
+        DBG("[VALIDATE] trying peak=%.2f\n", cand_peak);
+
+        if (last_peak_time != 0 && (now - last_peak_time > 3000)) {
+            DBG("[RESET] lost rhythm\n");
+            last_peak_time = 0;
+            last_peak_value = 0.0f;
+            expected_interval = 0;
+            peak_count = 0;
+            miss_count = 0;
+            last_miss_slot = 0;
+            prelock_interval_avg = 0.0f;
+            prelock_count = 0;
+        }
 
         if (last_peak_time == 0) {
-            last_peak_time = now;
-            last_peak_value = prev1;
+            DBG("[INIT] first peak\n");
+            last_peak_time = cand_time;
+            last_peak_value = cand_peak;
+            cand_valid = 0;
             goto shift;
         }
 
-        uint32_t interval = now - last_peak_time;
+        uint32_t interval = cand_time - last_peak_time;
 
-        /* ── 4. interval 限制 ── */
-        if (interval < 600 || interval > 1500) {
-            last_peak_time = now;
-            goto shift;
-        }
-
-        /* ── 5. peak 強度過濾（砍次波） ── */
-        if (last_peak_value > 0) {
-            if (prev1 < last_peak_value * 0.4f) {
-                last_peak_time = now;
+        if (expected_interval == 0) {
+            if (interval < PRELOCK_INTERVAL_MIN || interval > PRELOCK_INTERVAL_MAX) {
+                DBG("[REJECT] prelock interval=%d\n", interval);
+                miss_count++;
+                cand_valid = 0;
                 goto shift;
+            }
+
+            if (prelock_interval_avg > 0.0f) {
+                float prelock_ratio = interval / prelock_interval_avg;
+
+                if (prelock_ratio < PRELOCK_RATIO_MIN ||
+                    prelock_ratio > PRELOCK_RATIO_MAX) {
+                    DBG("[REJECT] prelock ratio=%.2f\n", prelock_ratio);
+                    miss_count++;
+                    cand_valid = 0;
+                    goto shift;
+                }
             }
         }
 
-        /* ── 6. 節奏一致性 ── */
         if (expected_interval > 0)
         {
             float ratio = interval / expected_interval;
 
-            if (ratio < 0.75f) {
-                last_peak_time = now;
+            // ===== 2 beat =====
+            if (ratio > 1.6f && ratio < 2.6f) {
+                DBG("[FIX] x2\n");
+                interval /= 2;
+            }
+/*             // ===== 3 beat =====
+            else if (ratio > 2.6f && ratio < 3.6f &&
+                    peak_count > 3) {
+                DBG("[FIX] x3\n");
+                interval /= 3;
+            }
+            // ===== 4 beat（保守）=====
+            else if (ratio > 3.6f && ratio < 5.0f &&
+                    peak_count > 6 &&
+                    miss_count < 2) {
+                DBG("[FIX] x4\n");
+                interval /= 4;
+            } */
+        }
+
+        DBG("[CHECK] interval=%d\n", interval);
+
+        if (interval < 500 || interval > 1500) {
+            DBG("[REJECT] interval out of range\n");
+            miss_count++;
+            cand_valid = 0;
+            goto shift;
+        }
+
+        // ===== 節奏 =====
+        if (expected_interval > 0)
+        {
+            float ratio = interval / expected_interval;
+
+            if (ratio < RHYTHM_RATIO_MIN || ratio > RHYTHM_RATIO_MAX) {
+                DBG("[REJECT] rhythm ratio=%.2f\n", ratio);
+                miss_count++;
+                cand_valid = 0;
                 goto shift;
             }
-
-            if (ratio > 1.6f) {
-                interval *= 0.5f;
-            }
-
         }
 
         float bpm = 60000.0f / interval;
 
-        /* ── 7. BPM 範圍 ── */
-        if (bpm < 50 || bpm > 120) {
-            last_peak_time = now;
+        if (bpm < 45 || bpm > 130) {
+            DBG("[REJECT] bpm out of range=%.1f\n", bpm);
+            miss_count++;
+            cand_valid = 0;
             goto shift;
         }
 
-        /* ── 8. 抗跳動 ── */
-        if (peak_count > 3 && averaged_bpm > 0 && fabsf(bpm - averaged_bpm) > 15){
-            last_peak_time = now;
+        if (expected_interval > 0 && averaged_bpm > 0 &&
+            (bpm > averaged_bpm + BPM_JUMP_UP_MAX ||
+             bpm < averaged_bpm - BPM_JUMP_DOWN_MAX)) {
+            DBG("[REJECT] bpm jump (%.1f vs %.1f)\n",
+                bpm, averaged_bpm);
+            miss_count++;
+            cand_valid = 0;
             goto shift;
         }
 
-        /* ── 9. 平滑 ── */
-        if (averaged_bpm <= 2)
+        // ===== VALID =====
+        miss_count = 0;
+        last_miss_slot = 0;
+
+        if (expected_interval > 0) {
+            float ratio = interval / expected_interval;
+
+            if (ratio > 1.6f) {
+                DBG("[BREAK] wrong rhythm unlock\n");
+                expected_interval = 0;
+                peak_count = 0;
+                prelock_interval_avg = 0.0f;
+                prelock_count = 0;
+            }
+        }
+
+        if (expected_interval == 0) {
+            prelock_interval_avg = (prelock_interval_avg == 0.0f)
+                ? (float)interval
+                : (0.65f * prelock_interval_avg + 0.35f * (float)interval);
+            prelock_count++;
+
+            if (prelock_count >= PRELOCK_READY_COUNT) {
+                expected_interval = prelock_interval_avg;
+                averaged_bpm = 60000.0f / expected_interval;
+                peak_count = PRELOCK_READY_COUNT;
+            } else if (averaged_bpm <= 2) {
+                averaged_bpm = bpm;
+            } else {
+                averaged_bpm = 0.85f * averaged_bpm + 0.15f * bpm;
+            }
+        } else if (averaged_bpm <= 2) {
             averaged_bpm = bpm;
-        else
-            averaged_bpm = 0.6f * averaged_bpm + 0.4f * bpm;
+        } else {
+            averaged_bpm = 0.7f * averaged_bpm + 0.3f * bpm;
+        }
 
-        /* ── 10. 更新節奏 ── */
         float cur_interval = 60000.0f / averaged_bpm;
 
-        peak_count++;
+        if (expected_interval > 0)
+            peak_count++;
 
-        if (peak_count > 3)   // ⭐ 前3拍不建立節奏
+        if (expected_interval > 0 && peak_count > 3)
         {
-            if (expected_interval == 0)
-                expected_interval = cur_interval;
-            else
-                expected_interval = 0.9f * expected_interval + 0.1f * cur_interval;
+            expected_interval = 0.85f * expected_interval + 0.15f * cur_interval;
         }
 
-        printf("[PEAK] %d ms BPM=%.0f\n", interval, bpm);
-        printf("[BPM] %d\n", (int)averaged_bpm);
+        last_peak_time = cand_time;
+        last_peak_value = cand_peak;
 
-        last_peak_time = now;
-        last_peak_value = prev1;
+        DBG("[ACCEPT] interval=%d bpm=%.1f avg=%.1f exp=%.0f\n",
+            interval, bpm, averaged_bpm, expected_interval);
+
+        cand_valid = 0;
+    }
+
+    // ===== fallback =====
+    if (miss_count >= 4) {
+        DBG("[RESET] too many miss\n");
+        last_peak_time = 0;
+        last_peak_value = 0.0f;
+        expected_interval = 0;
+        peak_count = 0;
+        miss_count = 0;
+        last_miss_slot = 0;
+        prelock_interval_avg = 0.0f;
+        prelock_count = 0;
+        cand_valid = 0;
     }
 
 shift:
@@ -301,7 +585,9 @@ void max30102_spo2_init(void)
 
 void max30102_spo2_update(uint32_t red, uint32_t ir)
 {
-    if (!has_signal) { spo2_idx = 0; return; }
+    if (!has_signal) {
+        return;
+    }
 
     spo2_red_buf[spo2_idx] = (float)red;
     spo2_ir_buf [spo2_idx] = (float)ir;

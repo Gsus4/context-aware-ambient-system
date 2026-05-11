@@ -37,7 +37,7 @@ int max30102_read_fifo(uint32_t *red, uint32_t *ir);
 // Heart Rate
 // =============================
 void max30102_hr_init(void);
-void max30102_hr_update(uint32_t red, uint32_t ir);
+void max30102_hr_update(uint32_t red, uint32_t ir, uint32_t now_ms);
 int  max30102_get_bpm(void);
 int max30102_has_signal(void);
 

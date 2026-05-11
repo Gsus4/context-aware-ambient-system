@@ -10,7 +10,7 @@
 #define DIVIDER 2.0f
 
 // ===== 兩點校正 =====
-#define GAIN    1.04f
+#define GAIN    1.055f
 #define OFFSET  0.0f
 
 // ===== 狀態 =====
@@ -28,7 +28,7 @@ void battery_init() {
 // ===== 讀電壓（單次）=====
 float read_battery_voltage_raw() {
 
-    sleep_us(50);
+    sleep_us(500);
     adc_read();
     sleep_us(10);
 
@@ -88,12 +88,14 @@ void battery_update(float *voltage, int *percent) {
 
     float v = read_battery_voltage_avg();
     v = low_pass_filter(v);
+    /* printf("Filtered: %.3f V\n", v); */
 
     int p = voltage_to_percent(v);
 
-    // ⭐ 抗跳動（避免%亂跳）
-    if (last_percent != -1 && abs(p - last_percent) > 5) {
-        p = last_percent;
+    // 抗跳動（避免%亂跳）
+    if (last_percent != -1) {
+        if (p > last_percent + 10) p = last_percent + 10;
+        if (p < last_percent - 10) p = last_percent - 10;
     }
 
     last_percent = p;
