@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+set -x
+
+module="smartlight_drv"
+device="smartlight0"
+
+if lsmod | awk '{print $1}' | grep -qx "$module"; then
+  /sbin/rmmod "$module"
+fi
+
+rm -f "/dev/$device"
+
+echo "smartlight driver unloaded"

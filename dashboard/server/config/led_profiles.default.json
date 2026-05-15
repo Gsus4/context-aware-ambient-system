@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "scene_profiles": {
+    "vacant": {
+      "label": "無人",
+      "target_lux": null,
+      "tolerance_lux": null,
+      "target_lux_min": null,
+      "target_lux_max": null,
+      "color_mode": "off",
+      "color_temp_k": null,
+      "rgb": null,
+      "effect": "off",
+      "min_output": 0,
+      "max_output": 0,
+      "adaptive_profile": "off"
+    },
+    "sleep": {
+      "label": "睡眠",
+      "target_lux": 50,
+      "tolerance_lux": 20,
+      "target_lux_min": 30,
+      "target_lux_max": 70,
+      "color_mode": "cct",
+      "color_temp_k": 2700,
+      "rgb": null,
+      "effect": "static",
+      "min_output": 5,
+      "max_output": 30,
+      "adaptive_profile": "slow"
+    },
+    "relax": {
+      "label": "放鬆",
+      "target_lux": 250,
+      "tolerance_lux": 50,
+      "target_lux_min": 200,
+      "target_lux_max": 300,
+      "color_mode": "cct",
+      "color_temp_k": 3000,
+      "rgb": null,
+      "effect": "breathing",
+      "min_output": 5,
+      "max_output": 70,
+      "adaptive_profile": "soft"
+    },
+    "work": {
+      "label": "工作",
+      "target_lux": 500,
+      "tolerance_lux": 75,
+      "target_lux_min": 425,
+      "target_lux_max": 575,
+      "color_mode": "cct",
+      "color_temp_k": 4500,
+      "rgb": null,
+      "effect": "static",
+      "min_output": 0,
+      "max_output": 100,
+      "adaptive_profile": "normal"
+    },
+    "exercise": {
+      "label": "運動",
+      "target_lux": 400,
+      "tolerance_lux": 100,
+      "target_lux_min": 300,
+      "target_lux_max": 500,
+      "color_mode": "rgb",
+      "color_temp_k": null,
+      "rgb": {
+        "r": 255,
+        "g": 120,
+        "b": 40
+      },
+      "effect": "breathing",
+      "min_output": 10,
+      "max_output": 85,
+      "adaptive_profile": "rgb_slow"
+    }
+  },
+  "custom_profiles": {
+    "fixed_brightness": {
+      "label": "固定亮度",
+      "custom_control_type": "fixed_brightness",
+      "fixed_brightness_pct": 64,
+      "target_lux": null,
+      "tolerance_lux": null,
+      "target_lux_min": null,
+      "target_lux_max": null,
+      "min_output": null,
+      "max_output": null,
+      "color_mode": "cct",
+      "color_temp_k": 3900,
+      "rgb": {
+        "r": 255,
+        "g": 160,
+        "b": 80
+      },
+      "effect": "static",
+      "flow_preset": "soft_rainbow",
+      "flow_speed": "medium",
+      "flow_brightness": 64,
+      "breathing_speed": "slow",
+      "breathing_strength": 50
+    }
+  }
+}

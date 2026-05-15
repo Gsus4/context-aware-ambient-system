@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智慧情境感知與空間氛圍控制系統｜控制面板</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+<main class="dashboard">
+  <header class="topbar">
+    <div class="brand"><div class="brand-icon" data-icon="home"></div><h1>智慧情境感知與空間氛圍控制系統</h1></div>
+    <div class="statusline"><div class="statusline-item"><span data-icon="clock"></span><span id="clockText">20:35:42</span></div><div class="statusline-item"><span data-icon="calendar"></span><span id="dateText">2024/05/21（二）</span></div><div class="divider"></div><div class="statusline-item"><span class="online-dot"></span><span>系統狀態：<b class="status-ok" id="systemStatusText">等待實機資料</b></span></div></div>
+  </header>
+  <section class="summary-grid">
+    <article class="summary-card" style="--accent:var(--purple);--glow:rgba(155,92,255,.28)"><div class="summary-icon" data-icon="relax"></div><div><div class="summary-label">情境模式</div><div class="summary-main"><div class="summary-value" id="summaryMode">放鬆模式</div></div><div class="summary-sub" id="summaryModeSub">舒適・放鬆・減壓</div></div></article>
+    
+    
+    
+    <article class="summary-card" style="--accent:var(--cyan);--glow:rgba(53,208,228,.18)"><div class="summary-icon" data-icon="fan"></div><div><div class="summary-label">風扇狀態</div><div class="summary-main"><div class="summary-value" id="summaryFanState">--</div></div><div class="summary-sub">等級 <span id="summaryFanSpeed">--</span>/10</div></div></article>
+    <article class="summary-card" style="--accent:var(--yellow);--glow:rgba(255,211,77,.2)"><div class="summary-icon" data-icon="sun"></div><div><div class="summary-label">舒適度</div><div class="summary-main"><div class="summary-value" id="summaryComfort">--</div><span class="summary-unit">/100</span></div><div class="summary-sub">--</div></div></article>
+    <article class="summary-card summary-connection-card" style="--accent:var(--green);--glow:rgba(66,232,138,.18)"><div class="summary-icon" data-icon="device"></div><div><div class="summary-label">系統連線</div><div class="summary-main"><div class="summary-value"><span id="onlineCount">0</span><span class="summary-unit"> / 3 模組</span></div></div><div class="summary-sub" id="onlineTotalText">實機即時判定</div></div></article>
+  </section>
+  <section class="main-grid">
+    <aside class="panel pad control-panel">
+      <h2 class="panel-title"><span class="left"><span data-icon="sliders"></span>控制面板</span></h2>
+<div><div class="section-label">LED 控制模式 <span class="question control-help" tabindex="0" aria-label="LED 控制模式說明">?<span class="control-mode-tooltip" role="tooltip"><b>情境模式</b>：使用無人、睡眠、放鬆、工作、運動五種目標照度情境。<br><b>自定義模式</b>：使用者自行調整進階燈光。</span></span></div><div class="smart-mode-row"><div><div class="subsection-title"><span data-icon="bot"></span>智慧模式</div></div><button class="switch on cyan" id="smartModeSwitch" data-toggle="smart-mode" type="button" aria-label="切換智慧模式"><span></span></button></div><div class="control-mode-grid"><button class="mode-card active" data-control-mode="scene" title="情境模式：無人、睡眠、放鬆、工作、運動"><span class="mode-card-icon" data-icon="relax"></span><span class="mode-text"><span class="mode-title">情境模式</span></span></button><button class="mode-card" data-control-mode="manual" title="自定義模式：由使用者直接控制設備狀態"><span class="mode-card-icon" data-icon="tap"></span><span class="mode-text"><span class="mode-title">自定義模式</span></span></button></div></div>
+      <div><div class="section-label">情境模式</div><div class="emotion-grid scene-mode-grid"><button class="small-mode" data-mode="vacant" title="無人：LED 關閉"><span data-icon="bulb"></span><span>無人</span></button><button class="small-mode" data-mode="sleep" title="睡眠：目標 50 lux，容許 ±20 lux"><span data-icon="moon"></span><span>睡眠</span></button><button class="small-mode active" data-mode="relax" title="放鬆：目標 250 lux，容許 ±50 lux"><span data-icon="relax"></span><span>放鬆</span></button><button class="small-mode" data-mode="work" title="工作：目標 500 lux，容許 ±75 lux"><span data-icon="book"></span><span>工作</span></button><button class="small-mode" data-mode="exercise" title="運動：目標 400 lux，容許 ±100 lux"><span data-icon="sun"></span><span>運動</span></button></div></div>
+      <div><div class="toggle-row"><div class="subsection-title"><span data-icon="bulb"></span>燈光控制（LED）</div><button class="switch on" data-toggle="led"><span></span></button></div></div>
+      <div class="slider-block"><div class="slider-head"><span id="brightnessLabel">目標亮度</span><span class="value"><span id="brightnessValue">--</span> %</span></div><div class="range-wrap"><span data-icon="brightness"></span><input id="brightnessRange" type="range" min="0" max="100" step="1" value="40" style="--range-color:var(--purple);--percent:40%"></div></div>
+      <div class="slider-block"><div class="slider-head"><span>色溫</span><span class="value">暖色 <span id="kelvinValue">--</span>K</span></div><div class="range-wrap"><span data-icon="temperature"></span><input id="kelvinRange" type="range" min="2700" max="6500" step="100" value="3000" style="--range-color:var(--orange);--percent:8%"></div></div>
+      <div class="advanced-entry"><div class="section-label">自定義燈光</div><button class="advanced-light-btn" id="openAdvancedLightBtn" type="button"><span data-icon="gear"></span><span>燈光進階設定</span></button></div>
+      <div class="fan-row"><div class="toggle-row"><div class="subsection-title"><span data-icon="fan"></span>風扇控制</div><span class="fan-level-badge" id="fanPowerText">0級關閉</span></div><div class="slider-block"><div class="slider-head"><span>風扇等級</span><span class="value"><span id="fanText">--</span>（<span id="fanValue">--</span>級）</span></div><div class="range-wrap"><span data-icon="brightness"></span><input id="fanRange" type="range" min="0" max="10" value="6" step="1" style="--range-color:var(--cyan);--percent:60%"></div></div></div>
+      <div class="control-bottom"><div class="control-status-card compact-status-card"><div class="control-status-title"><span data-icon="device"></span>目前控制狀態</div><div class="control-status-list"><div><span>模式</span><b id="controlStatusMode">智慧模式開啟</b></div><div><span>LED</span><b id="controlStatusLed">放鬆模式・--</b></div><div><span>風扇</span><b id="controlStatusFan">--</b></div><div><span>資料來源</span><b id="controlStatusSource">等待實機資料</b></div></div></div><div class="action-row"><button class="footer-btn primary" id="applyBtn">套用設定</button><button class="footer-btn" id="resetBtn">恢復預設</button></div></div>
+    </aside>
+    <section class="center-column">
+      <article class="panel space-panel"><h2 class="panel-title"><span class="left">空間狀態總覽</span></h2><div class="room-viewport"><div class="ceiling-strip"></div><div class="floor-strip"></div><div class="curtain"></div><div class="window-glow"></div><div class="lamp"></div><div class="wall-art"></div><div class="sofa"></div><div class="table"></div><div class="tv"></div><div class="plant"></div><div class="fan-object"></div><div class="air-purifier"></div><div class="room-tag tag-light"><div class="tag-head"><span data-icon="bulb"></span>燈光</div><div class="tag-main" id="roomLightTone">--</div><div class="tag-sub">亮度 <span id="roomBrightness">--</span>%</div></div><div class="room-tag tag-air"><div class="tag-head"><span data-icon="leaf"></span>空氣品質</div><div class="tag-main" id="roomAqiQuality">--</div><div class="tag-sub">Raw Value <span id="roomAqi">--</span></div></div><div class="room-tag tag-fan"><div class="tag-head"><span data-icon="fan"></span>風扇</div><div class="tag-main" id="roomFanState">--</div><div class="tag-sub">等級 <span id="roomFanSpeed">--</span>/10</div></div></div></article><article class="panel audio-panel audio-panel-unified">
+        <div class="bluetooth-audio-card room-audio-card audio-unified-window">
+          <div class="audio-card-head">
+            <div class="audio-title">
+              <span class="audio-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 15H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h4l6-4v14l-6-4Z"/><path d="M17 9a4 4 0 0 1 0 6"/><path d="M20 6a8 8 0 0 1 0 12"/></svg></span>
+              <span>藍牙音響</span>
+            </div>
+            <div class="audio-state" id="audioConnectionState">未連線</div>
+          </div>
+
+          <div class="audio-window-grid">
+            <div class="audio-track-zone">
+<div class="audio-wave" id="audioWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="audio-progress">
+                <div class="audio-progress-head"><span id="audioCurrentTime">--</span><span id="audioDurationTime">--</span></div>
+                <input id="audioProgressRange" class="audio-progress-range" type="range" min="0" max="225" value="72" step="1" style="--range-color:var(--cyan);--percent:32%" aria-label="音樂播放進度控制" />
+                <div class="audio-progress-bar" aria-hidden="true"><i id="audioProgressBar"></i></div>
+              </div>
+            </div>
+
+            <div class="audio-control-zone" aria-label="音樂播放控制">
+              <button class="audio-btn" type="button" data-audio-action="prev" title="上一首" aria-label="上一首"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM9 12l9-6v12z"/></svg></button>
+              <button class="audio-btn primary" type="button" data-audio-action="toggle" id="audioPlayPauseBtn" title="播放 / 暫停" aria-label="播放或暫停"><svg id="audioPlayPauseIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+              <button class="audio-btn" type="button" data-audio-action="next" title="下一首" aria-label="下一首"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l9-6-9-6z"/></svg></button>
+            </div>
+
+            <div class="audio-meta-zone">
+              <div class="audio-mode-line">播放模式：<b id="audioModeText">--</b></div>
+              <div class="audio-volume">
+                <span>音量 <b id="audioVolumeText">--</b></span>
+                <input id="audioVolumeRange" class="audio-volume-range" type="range" min="0" max="100" value="45" style="--range-color:var(--cyan);--percent:45%" aria-label="音響音量控制">
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="panel chart-panel"><h2 class="panel-title"><span class="left">趨勢圖表（最近 1 小時）</span><button class="more-btn" id="openTrendHistoryBtn" type="button">更多 ›</button></h2><div class="mini-chart-grid"><div class="mini-chart-card" style="--stat-color:var(--red)"><div class="mini-chart-title" style="color:var(--red)"><span data-icon="heartPulse"></span>心率 (bpm)</div><div class="chart-stat"><span id="heartTrendValue">--</span><small>平均</small></div><div class="chart-box"><canvas id="heartTrend"></canvas></div></div><div class="mini-chart-card" style="--stat-color:var(--blue)"><div class="mini-chart-title" style="color:var(--blue)"><span data-icon="drop"></span>血氧 (%)</div><div class="chart-stat"><span id="spo2TrendValue">--</span><small>平均</small></div><div class="chart-box"><canvas id="spo2Trend"></canvas></div></div><div class="mini-chart-card" style="--stat-color:var(--green)"><div class="mini-chart-title" style="color:var(--green)"><span data-icon="leaf"></span>Raw Value <span id="aqiTrendQuality" style="font-size:11px;color:#9eacc5;margin-left:3px"></span></div><div class="chart-stat"><span id="aqiTrendValue">--</span><small>平均</small></div><div class="chart-box"><canvas id="aqiTrend"></canvas></div></div></div></article>
+    </section>
+    <section class="right-column">
+      <article class="panel sensor-panel"><h2 class="panel-title"><span class="left">即時感測資訊</span></h2><div class="sensor-grid"><div class="sensor-card vital-combo-card vital-merged-card" style="--accent:var(--red)"><div class="sensor-title vital-combo-title"><span data-icon="heartPulse"></span>心率 / 血氧</div><div class="vital-merged-main"><div class="vital-merged-metric vital-heart" style="--accent:var(--red)"><div class="vital-combo-label"><span data-icon="heartPulse"></span>心率</div><span class="sensor-value"><span id="heartValue">--</span> <span class="unit">bpm</span></span><div class="sensor-sub">正常範圍：60-100</div></div><div class="vital-merged-divider" aria-hidden="true"></div><div class="vital-merged-metric vital-spo2" style="--accent:var(--blue)"><div class="vital-combo-label"><span data-icon="drop"></span>血氧</div><span class="sensor-value"><span id="spo2Value">--</span> <span class="unit">%</span></span><div class="sensor-sub">正常範圍：95-100</div></div></div><div class="vital-merged-charts"><div class="sensor-chart vital-chart"><canvas id="heartSmall"></canvas></div><div class="sensor-chart vital-chart"><canvas id="spo2Small"></canvas></div></div></div><div class="sensor-card" style="--accent:var(--green)"><div class="sensor-title"><span data-icon="leaf"></span>空氣品質</div><div><span class="sensor-value" style="color:var(--green)"><span id="aqiValue">--</span></span><div class="sensor-sub" style="color:var(--green)" id="aqiQuality">--</div></div><div class="sensor-chart"><canvas id="aqiBars"></canvas></div></div><div class="sensor-card gauge-card" style="--accent:var(--yellow)"><div class="sensor-title"><span data-icon="thermometer"></span>溫度</div><div><span class="sensor-value"><span id="tempValue">--</span> <span class="unit">°C</span></span><div class="sensor-sub">範圍：0–40°C</div></div><div class="gauge-wrap"><div class="gauge" id="tempGauge" style="--gauge-deg:120deg;--needle-rot:0deg"><svg class="gauge-svg" viewBox="0 0 160 92" aria-hidden="true"><path class="gauge-track" d="M20 76 A60 60 0 0 1 140 76"></path><path class="gauge-progress" d="M20 76 A60 60 0 0 1 140 76"></path></svg><div class="gauge-arc"></div><div class="gauge-needle" id="tempNeedle"></div><div class="gauge-center"></div><div class="gauge-labels"><span>0°C</span><span>40°C</span></div></div></div></div><div class="sensor-card gauge-card" style="--accent:var(--blue)"><div class="sensor-title"><span data-icon="drop"></span>濕度</div><div><span class="sensor-value"><span id="humidityValue">--</span> <span class="unit">%</span></span><div class="sensor-sub">範圍：0–100%</div></div><div class="gauge-wrap"><div class="gauge" id="humidityGauge" style="--gauge-deg:135deg;--needle-rot:0deg"><svg class="gauge-svg" viewBox="0 0 160 92" aria-hidden="true"><path class="gauge-track" d="M20 76 A60 60 0 0 1 140 76"></path><path class="gauge-progress" d="M20 76 A60 60 0 0 1 140 76"></path></svg><div class="gauge-arc"></div><div class="gauge-needle" id="humidityNeedle"></div><div class="gauge-center"></div><div class="gauge-labels"><span>0%</span><span>100%</span></div></div></div></div><div class="sensor-card" style="--accent:var(--green)"><div class="sensor-title"><span data-icon="person"></span>人體感測 (PIR)</div><div><span class="sensor-value" style="color:var(--green);font-size:clamp(17px,1.05vw,21px)" id="pirStateText">--</span><div class="sensor-sub">最後偵測：<span id="pirTime">--</span></div></div><div class="sensor-chart"></div></div></div><div class="device-strip module-strip"><div class="module-strip-head"><div class="device-state-main"><span data-icon="device"></span>模組連線狀態</div><div class="device-state-sub" id="moduleStatusSummary">等待實機資料</div><div class="device-state-small" id="moduleStatusSmall">0/3 模組連線</div></div><div class="module-status-grid" id="moduleStatusGrid"><div class="module-item" data-module="led"><span data-icon="bulb"></span><b>LED系統</b><em>--</em></div><div class="module-item" data-module="wearable"><span data-icon="heartPulse"></span><b>穿戴式手環</b><em>--</em></div><div class="module-item" data-module="envComfort"><span data-icon="leaf"></span><b>環境舒適度/節能控制節點</b><em>--</em></div></div><button class="camera-open-btn" id="openCameraBtn" type="button"><span data-icon="device"></span>查看監視器影像</button></div></article>
+      <article class="panel log-panel"><h2 class="panel-title"><span class="left">事件紀錄</span><button class="more-btn" id="openEventHistoryBtn" type="button">更多 ›</button></h2><div class="event-list" id="eventList"></div><details class="debug-log-panel"><summary>開發者 Debug Log</summary><pre id="debugLog">尚無除錯資料</pre></details></article>
+    </section>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="advancedLightModal" aria-hidden="true">
+  <section class="advanced-light-modal" role="dialog" aria-modal="true" aria-labelledby="advancedLightTitle">
+    <header class="advanced-modal-head">
+      <div>
+        <div class="advanced-modal-kicker">自定義模式限定</div>
+        <h2 id="advancedLightTitle">燈光進階設定</h2>
+      </div>
+      <button class="advanced-close" id="closeAdvancedLightBtn" type="button" aria-label="關閉燈光進階設定">×</button>
+    </header>
+    <div class="advanced-modal-body">
+      <div class="advanced-section">
+        <div class="advanced-section-title">LED 顏色</div>
+        <div class="advanced-color-row">
+          <button class="advanced-color-dot active" data-color="#ff8a5c" style="background:#ff8a5c" title="暖橘"></button>
+          <button class="advanced-color-dot" data-color="#ffc94d" style="background:#ffc94d" title="暖黃"></button>
+          <button class="advanced-color-dot" data-color="#fff15a" style="background:#fff15a" title="亮黃"></button>
+          <button class="advanced-color-dot" data-color="#5ce875" style="background:#5ce875" title="綠色"></button>
+          <button class="advanced-color-dot" data-color="#31c7ff" style="background:#31c7ff" title="青藍"></button>
+          <button class="advanced-color-dot" data-color="#466dff" style="background:#466dff" title="藍色"></button>
+          <button class="advanced-color-dot" data-color="#7a3dff" style="background:#35156b" title="紫色"></button>
+          <input id="advancedColorPicker" class="advanced-color-picker" type="color" value="#ff8a5c" aria-label="自訂 LED 顏色" />
+        </div>
+      </div>
+      <div class="advanced-grid-one">
+        <div class="advanced-section">
+          <div class="advanced-section-title">燈效亮度</div>
+          <div class="advanced-value-row"><span>燈效亮度</span><b><span id="advancedBrightnessValue">40</span>%</b></div>
+          <input id="advancedBrightnessRange" class="advanced-range" type="range" min="0" max="100" step="1" value="40" style="--range-color:var(--purple);--percent:40%" />
+        </div>
+      </div>
+      <div class="advanced-grid-two">
+        <div class="advanced-section">
+          <div class="advanced-section-title">呼吸燈設定</div>
+          <label class="advanced-check"><input id="breathingEnabled" type="checkbox" /> 啟用呼吸燈</label>
+          <label class="advanced-field">速度<select id="breathingSpeed"><option value="slow">慢速</option><option value="medium">中速</option></select></label>
+          <label class="advanced-field">強度<select id="breathingStrength"><option value="low">低</option><option value="medium">中</option></select></label>
+        </div>
+        <div class="advanced-section">
+          <div class="advanced-section-title">流水燈設定</div>
+          <label class="advanced-check"><input id="flowEnabled" type="checkbox" /> 啟用流水燈</label>
+          <label class="advanced-field">效果<select id="flowPreset"><option value="soft_rainbow">柔和彩虹</option><option value="aurora">極光</option></select></label>
+          <label class="advanced-field">速度<select id="flowSpeed"><option value="slow">慢速</option><option value="medium">中速</option></select></label>
+        </div>
+      </div>
+    </div>
+    <footer class="advanced-modal-actions">
+      <button class="footer-btn" id="cancelAdvancedLightBtn" type="button">取消</button>
+      <button class="footer-btn primary" id="applyAdvancedLightBtn" type="button">套用進階設定</button>
+    </footer>
+  </section>
+</div>
+
+
+  <div class="camera-modal-backdrop" id="cameraModal" aria-hidden="true">
+    <div class="camera-modal" role="dialog" aria-label="監視器即時影像">
+      <div class="camera-modal-head">
+        <div>
+          <div class="camera-kicker">VISION / CAMERA</div>
+          <h2>監視器即時影像</h2>
+          <p>影像辨識模組畫面預覽。未接入實機影像來源時顯示 --。</p>
+        </div>
+        <button class="camera-close-btn" id="closeCameraBtn" type="button" aria-label="關閉監視器影像">×</button>
+      </div>
+      <div class="camera-frame">
+        <div class="camera-placeholder" id="cameraPlaceholder">
+          <div class="camera-scanline"></div>
+          <div class="camera-box camera-box-person">person</div>
+          <div class="camera-box camera-box-light">light</div>
+          <div class="camera-time" id="cameraTime">--:--:--</div>
+          <div class="camera-label">CAM-01｜目前影像</div>
+        </div>
+        <img id="cameraSnapshot" alt="監視器目前影像" style="display:none;" />
+      </div>
+      <div class="camera-modal-actions">
+        <button class="footer-btn" id="refreshCameraBtn" type="button">更新影像</button>
+        <button class="footer-btn primary" id="closeCameraBtn2" type="button">關閉</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="history-modal-backdrop" id="trendHistoryModal" aria-hidden="true">
+    <section class="history-modal history-modal-wide" role="dialog" aria-modal="true" aria-labelledby="trendHistoryTitle">
+      <header class="history-modal-head">
+        <div>
+          <div class="history-kicker">WEEKLY TREND</div>
+          <h2 id="trendHistoryTitle">趨勢圖表（一週紀錄）</h2>
+          <p>顯示最近 7 天有效感測資料；超出合理範圍的異常值不納入紀錄。</p>
+        </div>
+        <button class="history-close-btn" id="closeTrendHistoryBtn" type="button" aria-label="關閉一週趨勢紀錄">×</button>
+      </header>
+      <div class="history-modal-body trend-history-body">
+        <div class="weekly-summary-grid">
+          <div class="weekly-summary-card" style="--stat-color:var(--red)"><span>心率平均</span><b id="heartWeeklyAvg">--</b><small id="heartWeeklyCount">0 筆有效資料</small></div>
+          <div class="weekly-summary-card" style="--stat-color:var(--blue)"><span>血氧平均</span><b id="spo2WeeklyAvg">--</b><small id="spo2WeeklyCount">0 筆有效資料</small></div>
+          <div class="weekly-summary-card" style="--stat-color:var(--green)"><span>Raw Value 平均</span><b id="aqiWeeklyAvg">--</b><small id="aqiWeeklyCount">0 筆有效資料</small></div>
+        </div>
+        <div class="weekly-chart-grid">
+          <div class="weekly-chart-card"><div class="weekly-chart-title" style="color:var(--red)">心率 bpm</div><canvas id="heartWeeklyTrend"></canvas></div>
+          <div class="weekly-chart-card"><div class="weekly-chart-title" style="color:var(--blue)">血氧 %</div><canvas id="spo2WeeklyTrend"></canvas></div>
+          <div class="weekly-chart-card"><div class="weekly-chart-title" style="color:var(--green)">空氣品質 Raw Value</div><canvas id="aqiWeeklyTrend"></canvas></div>
+        </div>
+        <div class="weekly-table-wrap">
+          <table class="weekly-table">
+            <thead><tr><th>日期</th><th>心率 avg/min/max</th><th>血氧 avg/min/max</th><th>Raw Value avg/min/max</th><th>有效筆數</th></tr></thead>
+            <tbody id="weeklyTrendRows"><tr><td colspan="5">尚無一週紀錄</td></tr></tbody>
+          </table>
+        </div>
+        <div class="history-note">異常值過濾：心率 30–220 bpm、血氧 70–100%、Raw Value 0–1000、溫度 -10–60°C、濕度 0–100%。</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="history-modal-backdrop" id="eventHistoryModal" aria-hidden="true">
+    <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="eventHistoryTitle">
+      <header class="history-modal-head">
+        <div>
+          <div class="history-kicker">EVENT LOG</div>
+          <h2 id="eventHistoryTitle">事件紀錄（最近 100 筆）</h2>
+          <p>顯示最近 100 筆操作訊息與系統提示，可上下捲動查看。</p>
+        </div>
+        <button class="history-close-btn" id="closeEventHistoryBtn" type="button" aria-label="關閉事件紀錄視窗">×</button>
+      </header>
+      <div class="history-modal-body">
+        <div class="event-history-toolbar">目前顯示 <b id="eventHistoryCount">0</b> / 100 筆</div>
+        <div class="event-history-list" id="eventHistoryList"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+<script src="js/config.js"></script>
+<script src="js/dashboard-app.js"></script>
+<script src="js/data-adapter.js"></script>
+<script src="js/led-advanced-panel.js"></script>
+</body>
+</html>
