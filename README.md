@@ -6,22 +6,6 @@
 
 本專案目標是讓使用者能透過 Dashboard 操作照明情境，並由 Raspberry Pi 作為 Node / Gateway 進行指令橋接，再由 Pico W 負責 LED 燈條控制與感測資料整合。
 
----
-
-## 系統架構
-
-```text
-Dashboard
-   ↓ MQTT
-Raspberry Pi Node / Gateway
-   ↓ UART
-Pico W MCU
-   ↓
-LED 燈條 / 感測器
-```
-
----
-
 ## 我的負責項目
 
 - Raspberry Pi 與 Pico W 通訊整合
