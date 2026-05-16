@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.runtime/
+
+dashboard_old/
+drafts/
+music/
+src/smart_space/data/*.tmp
+
+.env
+.dashboard.log
