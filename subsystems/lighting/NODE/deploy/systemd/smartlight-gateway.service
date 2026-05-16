@@ -1,0 +1,29 @@
+[Unit]
+Description=SmartLight Gateway
+Wants=network-online.target smartlight-driver-load.service
+After=network-online.target smartlight-driver-load.service
+ConditionPathExists=@SERVICE_ROOT@/NODE/scripts/07_deploy/01_run_gateway_service.sh
+
+[Service]
+Type=simple
+User=@RUN_USER@
+Group=@RUN_GROUP@
+PermissionsStartOnly=true
+Environment=SMARTLIGHT_RUN_USER=@RUN_USER@
+Environment=SMARTLIGHT_RUN_GROUP=@RUN_GROUP@
+Environment=SMARTLIGHT_SERVICE_ROOT=@SERVICE_ROOT@
+EnvironmentFile=-/etc/default/smartlight-gateway
+EnvironmentFile=-/run/smartlight-gateway-broker.env
+WorkingDirectory=@SERVICE_ROOT@/NODE/gateway_c
+ExecStartPre=/bin/bash @SERVICE_ROOT@/NODE/scripts/07_deploy/02_select_broker_runtime.sh
+ExecStartPre=/bin/bash @SERVICE_ROOT@/NODE/scripts/07_deploy/00_boot_preflight.sh gateway
+ExecStartPre=/bin/bash @SERVICE_ROOT@/NODE/scripts/07_deploy/03_stop_conflicting_gateways.sh
+ExecStart=/bin/bash @SERVICE_ROOT@/NODE/scripts/07_deploy/01_run_gateway_service.sh
+Restart=always
+RestartSec=3
+TimeoutStartSec=180
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

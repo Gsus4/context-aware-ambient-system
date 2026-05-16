@@ -1,0 +1,23 @@
+[Unit]
+Description=SmartLight driver load service
+After=local-fs.target dev-serial0.device systemd-udev-settle.service
+Wants=dev-serial0.device systemd-udev-settle.service
+Before=smartlight-gateway.service
+ConditionPathExists=@SERVICE_ROOT@/NODE/scripts/07_deploy/02_load_driver_service.sh
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=SMARTLIGHT_RUN_USER=@RUN_USER@
+Environment=SMARTLIGHT_RUN_GROUP=@RUN_GROUP@
+Environment=SMARTLIGHT_SERVICE_ROOT=@SERVICE_ROOT@
+EnvironmentFile=-/etc/default/smartlight-gateway
+WorkingDirectory=@SERVICE_ROOT@
+ExecStartPre=/bin/bash @SERVICE_ROOT@/NODE/scripts/07_deploy/00_boot_preflight.sh driver
+ExecStart=/bin/bash @SERVICE_ROOT@/NODE/scripts/07_deploy/02_load_driver_service.sh
+ExecStop=/bin/bash @SERVICE_ROOT@/NODE/scripts/07_deploy/05_unload_driver_service.sh
+TimeoutStartSec=180
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

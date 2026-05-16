@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+set -x
+
+module="smartlight_drv"
+ko="./smartlight_drv.ko"
+device="smartlight0"
+uart_path="${1:-/dev/serial0}"
+mode="${SMARTLIGHT_DEVICE_MODE:-0660}"
+owner="${SMARTLIGHT_DEVICE_OWNER:-}"
+group="${SMARTLIGHT_DEVICE_GROUP:-}"
+
+if [[ ! -f "${ko}" ]]; then
+  echo "找不到 ${ko}，請先在 driver 目錄執行 make" >&2
+  exit 1
+fi
+
+if lsmod | awk '{print $1}' | grep -qx "${module}"; then
+  /sbin/rmmod "${module}" || true
+  sleep 1
+fi
+
+if [[ -e "${uart_path}" ]]; then
+  stty -F "${uart_path}" 115200 raw -echo || true
+fi
+
+/sbin/insmod "${ko}" uart_path="${uart_path}"
+
+count=0
+while [[ ! -e "/dev/${device}" && "${count}" -lt 50 ]]; do
+  sleep 0.1
+  count=$((count + 1))
+done
+
+if [[ ! -e "/dev/${device}" ]]; then
+  major=$(awk -v dev="${device}" '$2==dev {print $1}' /proc/devices)
+  if [[ -z "${major}" ]]; then
+    echo "無法從 /proc/devices 找到 ${device} 的 major number" >&2
+    /sbin/rmmod "${module}" || true
+    exit 1
+  fi
+  rm -f "/dev/${device}"
+  mknod "/dev/${device}" c "${major}" 0
+fi
+
+if [[ -n "${group}" ]]; then
+  chgrp "${group}" "/dev/${device}" || true
+fi
+if [[ -n "${owner}" ]]; then
+  chown "${owner}" "/dev/${device}" || true
+fi
+chmod "${mode}" "/dev/${device}" || true
+ls -l "/dev/${device}"
+echo "smartlight driver loaded. uart_path=${uart_path} mode=${mode} owner=${owner:-<default>} group=${group:-<default>}"

@@ -1,0 +1,17 @@
+{
+  "name": "dashboard",
+  "version": "1.5.0-multi-broker-realdata",
+  "private": true,
+  "description": "Dashboard multi Broker hardware MQTT integration: SmartLight, wearable heart rate SpO2, and environment monitoring",
+  "scripts": {
+    "start": "node server/dashboard-mqtt-bridge.js",
+    "dev": "node server/dashboard-dev-server.js",
+    "start:mqtt": "node server/dashboard-mqtt-bridge.js",
+    "mqtt": "node server/dashboard-mqtt-bridge.js",
+    "mock:smartlight": "node mock_smartlight_device.js"
+  },
+  "dependencies": {
+    "mqtt": "^5.10.4",
+    "ws": "^8.18.0"
+  }
+}
